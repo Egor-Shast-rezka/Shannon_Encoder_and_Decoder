@@ -5,11 +5,17 @@
 */
 
 
+#include "Encoder_Shannon.h"
 
 
 // ================== main ==================
 
 int main() {
     
+    CoderShannon coder;
+    
+    coder.start_encoder();
+    
     return 0;
 }
+

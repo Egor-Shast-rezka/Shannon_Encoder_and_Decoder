@@ -3,11 +3,11 @@ CXXFLAGS = -Werror -Wpedantic -Wall -std=c++17 -Iinclude -I./libs/eigen-3.4.0
 
 BUILDDIR = build
 BINDIR = bin
-MATRIX = $(wildcard *.csv)
+FILES = $(wildcard *.txt)
 
 TARGET = $(BINDIR)/Start
 
-SRCS_MAIN = main.cpp
+SRCS_MAIN = Encoder_Shannon.cpp main.cpp
 SRCS_TEST = test.cpp
 
 OBJS_MAIN = $(patsubst %.cpp, $(BUILDDIR)/%.o, $(SRCS_MAIN))
@@ -39,6 +39,6 @@ $(BUILDDIR)/test.o: test.cpp | $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
  
 clean:
-	rm -rf $(BUILDDIR) $(BINDIR) $(MATRIX)
+	rm -rf $(BUILDDIR) $(BINDIR) $(FILES)
 
 .PHONY: all clean test
