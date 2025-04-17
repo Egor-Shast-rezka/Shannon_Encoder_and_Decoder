@@ -5,6 +5,7 @@
 */
 
 
+#include "dictionary.h"
 #include "Encoder_Shannon.h"
 
 
@@ -120,12 +121,15 @@ std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::str
 
 void CoderShannon::start_encoder() {
     
-    std::unordered_map<char, float> freq;
+    map<char, float> freq;
     std::string file_name = checkAnswerUser("Write name input file (in format txt): ", {".txt"});
     std::string input = read_file(file_name);
     for (char ch : input) freq[ch] += 1;
-
-    std::vector<std::pair<char, float>> sorted_dict(freq.begin(), freq.end());
+    
+    auto begin = freq.begin();
+    auto end = freq.end();
+    
+    std::vector<std::pair<char, float>> sorted_dict(begin, end);
 
     std::sort(sorted_dict.begin(), sorted_dict.end(),
         [](const std::pair<char, float>& a, const std::pair<char, float>& b) {
@@ -140,7 +144,7 @@ void CoderShannon::start_encoder() {
 
     Split(sorted_dict, shannon_code);
 
-    std::unordered_map<char, std::string> shannon_code_dict;
+    map<char, std::string> shannon_code_dict;
     for (const auto& pair : shannon_code) shannon_code_dict[pair.first] = pair.second;
 
     std::string output_data;
@@ -155,3 +159,4 @@ void CoderShannon::start_encoder() {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
+
