@@ -1,10 +1,12 @@
 /*
     Egor Shastin st129457@student.spbu.ru
     
-    
+    > Custom implementation of a hash map using separate chaining.
+    > Provides basic operations: insert, find, access via [], size, and iteration.
 */
 
 
+#include <iostream>
 #include <vector>
 #include <list>
 #include <utility>
@@ -119,6 +121,14 @@ public:
     auto end() {
         return flat_data_cache.end();
     }
+    
+    void print() const {
+    for (const auto& bucket : table) {
+        for (const auto& pair : bucket) {
+            std::cout << pair.first << " : " << pair.second << "\n";
+        }
+    }
+}
 };
 
 

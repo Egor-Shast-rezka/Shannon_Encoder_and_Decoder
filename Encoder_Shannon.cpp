@@ -1,7 +1,7 @@
 /*
     Egor Shastin st129457@student.spbu.ru
     
-    
+    Header file for the CoderShannon class, which implements the Shannon-Fano algorithm for encoding text.
 */
 
 
@@ -11,9 +11,11 @@
 
 // ================== main ==================
 
-float CoderShannon::sum_dict(const std::vector<std::pair<char, float>>& dict) {
+float CoderShannon::sum_dict(const std::vector<std::pair<char, float>>& dict) { // Sum all second value in dictionarry
+
     float summa = 0;
     for (const auto& elem : dict) summa += elem.second;
+    
     return summa;
 }
 
@@ -22,7 +24,7 @@ float CoderShannon::sum_dict(const std::vector<std::pair<char, float>>& dict) {
 
 void CoderShannon::Split(const std::vector<std::pair<char, float>>& dict, 
     std::vector<std::pair<char, std::string>>& code_result,
-    int start_i) {
+    int start_i) { // Get each symbol unique num
 
     if (dict.empty()) return;
 
@@ -65,11 +67,13 @@ void CoderShannon::Split(const std::vector<std::pair<char, float>>& dict,
 
 // ================== read_file ==================
 
-std::string CoderShannon::read_file(const std::string& filename) {
+std::string CoderShannon::read_file(const std::string& filename) { // Read file from txt file
 
     std::ifstream file(filename);
+    std::string exemple_file = "input_example.txt";
     if (!file.is_open()) {
-        throw std::runtime_error("Unknown file: " + filename);
+        std::cerr << "Error: file " << filename << " unknown. Use '" << exemple_file << "'.\n";
+        std::ifstream file(exemple_file);
     }
 
     std::stringstream buffer;
@@ -81,18 +85,22 @@ std::string CoderShannon::read_file(const std::string& filename) {
 
 // ================== write_file ==================
 
-void CoderShannon::write_file(const std::string& filename, const std::string& content) {
+void CoderShannon::write_file(const std::string& filename, const std::string& text) { // Write file in txt file
 
-    std::ofstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Couldn't open the file: " + filename);
-
-    file << content;
+    std::ofstream file(filename, std::ios::out | std::ios::binary);
+    
+    if (file.is_open()) {
+    
+        file.write(text.c_str(), text.size());
+        file.close();
+        
+    } else std::cerr << "Failed to write file: " << filename << "\n";
 }
 
 
 // ================== checkAnswerUser ==================
 
-std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::string> values) {
+std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::string> values) { // Check user answer
     
     std::cout << call;
     
@@ -119,12 +127,12 @@ std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::str
 
 // ================== start_encoder ==================
 
-void CoderShannon::start_encoder() {
+void CoderShannon::start_encoder() { // Start encoder shannon
     
     // Get user file
     map<char, float> freq;
     std::string file_name = checkAnswerUser("Write name input file (in format txt): ", {".txt"});
-    std::string input = read_file(file_name);
+    std::string input = read_file("data/" + file_name);
     for (char ch : input) freq[ch] += 1;
     
     auto begin = freq.begin();
@@ -167,11 +175,11 @@ void CoderShannon::start_encoder() {
     // Writing in output file
     try {
     
-        write_file(output_file_name, output_data);
-        std::cout << "The file was recorded successfully!\n";
+        write_file("data/" + output_file_name, output_data);
+        std::cout << "The output file was recorded successfully!\n";
         
-        write_file(dictionary_output_file_name, dictionary_output_data);
-        std::cout << "The file was recorded successfully!\n";
+        write_file("data/" + dictionary_output_file_name, dictionary_output_data);
+        std::cout << "The dictionary file was recorded successfully!\n";
         
     }
     catch (const std::exception& e) {
