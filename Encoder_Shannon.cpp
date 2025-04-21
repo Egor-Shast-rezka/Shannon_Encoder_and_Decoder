@@ -9,9 +9,9 @@
 #include "Encoder_Shannon.h"
 
 
-// ================== main ==================
+// ================== sum_dict ==================
 
-float CoderShannon::sum_dict(const std::vector<std::pair<char, float>>& dict) { // Sum all second value in dictionarry
+float CoderShannon::sum_dict(const std::vector<std::pair<std::string, float>>& dict) { // Sum all second value in dictionarry
 
     float summa = 0;
     for (const auto& elem : dict) summa += elem.second;
@@ -22,8 +22,8 @@ float CoderShannon::sum_dict(const std::vector<std::pair<char, float>>& dict) { 
 
 // ================== Split ==================
 
-void CoderShannon::Split(const std::vector<std::pair<char, float>>& dict, 
-    std::vector<std::pair<char, std::string>>& code_result,
+void CoderShannon::Split(const std::vector<std::pair<std::string, float>>& dict, 
+    std::vector<std::pair<std::string, std::string>>& code_result,
     int start_i) { // Get each symbol unique num
 
     if (dict.empty()) return;
@@ -39,8 +39,8 @@ void CoderShannon::Split(const std::vector<std::pair<char, float>>& dict,
         return;
     }
 
-    std::vector<std::pair<char, float>> first_pare;
-    std::vector<std::pair<char, float>> second_pare;
+    std::vector<std::pair<std::string, float>> first_pare;
+    std::vector<std::pair<std::string, float>> second_pare;
 
     float sum = 0;
     float sum_all_dict = sum_dict(dict) * 0.5;
@@ -71,9 +71,11 @@ std::string CoderShannon::read_file(const std::string& filename) { // Read file 
 
     std::ifstream file(filename);
     std::string exemple_file = "input_example.txt";
+    
     if (!file.is_open()) {
+    
         std::cerr << "Error: file " << filename << " unknown. Use '" << exemple_file << "'.\n";
-        std::ifstream file(exemple_file);
+        file.open(exemple_file);
     }
 
     std::stringstream buffer;
@@ -85,16 +87,12 @@ std::string CoderShannon::read_file(const std::string& filename) { // Read file 
 
 // ================== write_file ==================
 
-void CoderShannon::write_file(const std::string& filename, const std::string& text) { // Write file in txt file
+void CoderShannon::write_file(const std::string& filename, const std::string& content) {
 
-    std::ofstream file(filename, std::ios::out | std::ios::binary);
-    
-    if (file.is_open()) {
-    
-        file.write(text.c_str(), text.size());
-        file.close();
-        
-    } else std::cerr << "Failed to write file: " << filename << "\n";
+    std::ofstream file(filename);
+    if (!file.is_open()) throw std::runtime_error("Couldn't open the file: " + filename);
+
+    file << content;
 }
 
 
@@ -125,47 +123,86 @@ std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::str
 }
 
 
+// ================== escape_char ==================
+
+std::string CoderShannon::escape_char(const std::string& ch) { // Check special symbol (\n, \t ...)
+    if (ch == "\n") return "\\n";
+    if (ch == "\t") return "\\t";
+    if (ch == "\r") return "\\r";
+    if (ch == "\\") return "\\\\";
+    if (ch == "\'") return "\\\'";
+    if (ch == "\"") return "\\\"";
+
+    return ch;
+}
+
+
+// ================== utf8_split ==================
+
+// The function splits a UTF-8 encoded string into individual characters.
+std::vector<std::string> CoderShannon::utf8_split(const std::string& str) { 
+
+    std::vector<std::string> result;
+    
+    for (size_t i = 0; i < str.size();) {
+    
+        unsigned char c = str[i];
+        size_t len = 1;
+        
+        // 1, 2, 3 and 4-byte
+        if ((c & 0x80) == 0x00) len = 1;
+        else if ((c & 0xE0) == 0xC0) len = 2;
+        else if ((c & 0xF0) == 0xE0) len = 3;
+        else if ((c & 0xF8) == 0xF0) len = 4;
+
+        result.push_back(str.substr(i, len));
+        i += len;
+    }
+    return result;
+}
+
+
 // ================== start_encoder ==================
 
 void CoderShannon::start_encoder() { // Start encoder shannon
     
     // Get user file
-    map<char, float> freq;
+    map<std::string, float> freq;
     std::string file_name = checkAnswerUser("Write name input file (in format txt): ", {".txt"});
     std::string input = read_file("data/" + file_name);
-    for (char ch : input) freq[ch] += 1;
+    auto symbols = utf8_split(input);
+    for (const std::string& ch : symbols) freq[ch] += 1;
     
+    // Create sorted dictionary
     auto begin = freq.begin();
     auto end = freq.end();
     
-    std::vector<std::pair<char, float>> sorted_dict(begin, end);
+    std::vector<std::pair<std::string, float>> sorted_dict(begin, end);
 
     std::sort(sorted_dict.begin(), sorted_dict.end(),
-        [](const std::pair<char, float>& a, const std::pair<char, float>& b) {
+        [](const std::pair<std::string, float>& a, const std::pair<std::string, float>& b) {
             return a.second > b.second;
         });
-
+    
+    // Add chanse for all symbol in dictionary
     for (auto& pair : sorted_dict) pair.second /= freq.size();
-
-    std::vector<std::pair<char, std::string>> shannon_code;
-    for (const auto& pair : sorted_dict)
-        shannon_code.push_back({pair.first, ""});
+    
+    // Make shannon code 
+    std::vector<std::pair<std::string, std::string>> shannon_code;
+    for (const auto& pair : sorted_dict) shannon_code.push_back({pair.first, ""});
 
     Split(sorted_dict, shannon_code);
-
-    map<char, std::string> shannon_code_dict;
-    for (const auto& pair : shannon_code) shannon_code_dict[pair.first] = pair.second;
+    
+    map<std::string, std::string> shannon_code_dict;
+    for (auto& pair : shannon_code) shannon_code_dict.insert(pair.first, pair.second);
     
     // Create output file
     std::string output_data;
     std::string dictionary_output_data;
-    for (char ch : input) output_data += shannon_code_dict[ch];
-    for (const auto& pair : shannon_code) {
-        if (std::string(1, pair.first) == "\n") {
-        
-            dictionary_output_data += "'\\n' : " + pair.second + "\n";
-            
-        } else dictionary_output_data += "'" + std::string(1, pair.first) + "' : " + pair.second + "\n";
+    
+    for (auto& ch : symbols) output_data += shannon_code_dict[ch];
+    for (auto& pair : shannon_code) {
+        dictionary_output_data += escape_char(pair.first) + ": " + pair.second + "\n";
     }
     
     // Name for output file
@@ -186,5 +223,5 @@ void CoderShannon::start_encoder() { // Start encoder shannon
     
         std::cerr << "Error: " << e.what() << "\n";
     }
+    
 }
-
