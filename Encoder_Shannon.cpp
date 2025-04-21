@@ -47,6 +47,7 @@ void CoderShannon::Split(const std::vector<std::pair<std::string, float>>& dict,
     int i = 0;
 
     while (i < static_cast<int>(dict.size()) && sum + dict[i].second <= sum_all_dict) {
+    
         sum += dict[i].second;
         first_pare.push_back(dict[i]);
         code_result[start_i + i].second += "0";
@@ -56,6 +57,7 @@ void CoderShannon::Split(const std::vector<std::pair<std::string, float>>& dict,
     Split(first_pare, code_result, start_i);
 
     while (i < static_cast<int>(dict.size())) {
+    
         second_pare.push_back(dict[i]);
         code_result[start_i + i].second += "1";
         i++;
@@ -126,6 +128,7 @@ std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::str
 // ================== escape_char ==================
 
 std::string CoderShannon::escape_char(const std::string& ch) { // Check special symbol (\n, \t ...)
+
     if (ch == "\n") return "\\n";
     if (ch == "\t") return "\\t";
     if (ch == "\r") return "\\r";
@@ -166,11 +169,16 @@ std::vector<std::string> CoderShannon::utf8_split(const std::string& str) {
 
 void CoderShannon::start_encoder() { // Start encoder shannon
     
+    // Name for output file
+    std::string output_file_name = "output.txt";
+    std::string dictionary_output_file_name = "dictionary.txt";
+    
     // Get user file
-    map<std::string, float> freq;
     std::string file_name = checkAnswerUser("Write name input file (in format txt): ", {".txt"});
     std::string input = read_file("data/" + file_name);
     auto symbols = utf8_split(input);
+    
+    map<std::string, float> freq;
     for (const std::string& ch : symbols) freq[ch] += 1;
     
     // Create sorted dictionary
@@ -204,10 +212,6 @@ void CoderShannon::start_encoder() { // Start encoder shannon
     for (auto& pair : shannon_code) {
         dictionary_output_data += escape_char(pair.first) + ": " + pair.second + "\n";
     }
-    
-    // Name for output file
-    std::string output_file_name = "output.txt";
-    std::string dictionary_output_file_name = "dictionary.txt";
     
     // Writing in output file
     try {
