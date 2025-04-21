@@ -10,9 +10,9 @@
 
 // ================== is_num ==================
 
-bool DecoderShannon::is_num(char elem) { // Check is number or no
+bool DecoderShannon::is_num(const std::string elem) { // Check is number or no
 
-    return elem >= '0' && elem <= '9';
+    return elem >= "0" && elem <= "9";
 }
 
 
@@ -30,7 +30,6 @@ std::string DecoderShannon::unescape(const std::string& str) { // Check special 
     return str;
 }
 
-
 // ================== read_file ==================
 
 std::string DecoderShannon::read_file(const std::string& filename) { // Read file from txt file
@@ -38,7 +37,9 @@ std::string DecoderShannon::read_file(const std::string& filename) { // Read fil
     std::ifstream file(filename);
     
     if (!file.is_open()) std::cerr << "ERROR: File " << filename << " unknown.\n";
-
+    
+    file.open(filename);
+    
     std::stringstream buffer;
     buffer << file.rdbuf();
 
@@ -56,9 +57,9 @@ std::string DecoderShannon::decoder(std::string input_file, map<std::string, std
     for (char& elem : input_file) {
         
         current_num += elem;
+        
         if (dictionary.find(current_num) != nullptr) {
-            
-            output += unescape(dictionary[current_num]);
+            output += dictionary[current_num];
             current_num = "";
         }
     }
@@ -77,44 +78,40 @@ void DecoderShannon::start_decoder() { // Start decoder shannon
     std::string file_name = checkAnswerUser("Write name input file (in format txt): ", {".txt"});
     
     // Get data
-    std::string str = read_file("data/" + file_name_dictionary);
+    std::string input = read_file("data/" + file_name_dictionary);
     std::string input_file = read_file("data/" + file_name);
     
+    auto input_correct = utf8_split(input);
+    
     map<std::string, std::string> dictionary; // Dictionary for (num : symbol)
-
+    
     std::string last_str = "";
     std::string last_num = "";
-    bool in_str = false;
-    bool in_num = false;
     
     // Get data from dictionary
-    for (int elem = 0; elem < static_cast<int>(str.size()); ++elem) {
-        
-        // Unique case - sumbol it is '
-        if (str[elem] == '\'' && elem + 2 < static_cast<int>(str.size()) && str[elem + 2] == '\'' \
-            && str[elem + 1] == '\'' && !in_str && !in_num) {
-        
-            last_str = "'";
-            elem += 2;
-        }
-        else if ((str[elem] == '\'') && in_str) in_str = !in_str; // Exit line
-        else if (str[elem] == '\'') in_str = !in_str; // Enter line
-        else if (in_str) last_str += str[elem]; // Add line
-        
-        if (in_num && !is_num(str[elem])) { // Exit num and make act
-        
-            in_num = !in_num;
-            dictionary[last_num] = last_str;
-            last_num = "";
+    for (int elem = 0; elem < static_cast<int>(input_correct.size()); ++elem) {
+
+        if (!last_str.empty() && !last_num.empty() && !is_num(input_correct[elem])) {
+            
+            dictionary.insert(last_num, unescape(last_str));
             last_str = "";
+            last_num = "";
         }
-        else if (!in_str && !in_num && is_num(str[elem])) { // Enter num
+        if (last_str.empty() && input_correct[elem] != "\n") {
         
-            in_num = true;
-            last_num += str[elem];
+            last_str += input_correct[elem];
+            
+            if (input_correct[elem] == "\\") {
+            
+                last_str += input_correct[elem+1];
+                elem++;
+            }
         }
-        else if (in_num && is_num(str[elem])) last_num += str[elem]; // Add num
+        else if (!last_str.empty() && is_num(input_correct[elem])) last_num += input_correct[elem];
     }
+    if (!last_str.empty() && !last_num.empty()) dictionary.insert(last_num, unescape(last_str));
+    
+    dictionary.print();
     write_file("data/" + name_output_file, decoder(input_file, dictionary)); // End, Write file
     std::cout << "The output file was recorded successfully!\n";
 }

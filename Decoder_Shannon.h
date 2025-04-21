@@ -25,7 +25,7 @@
 class DecoderShannon : public CoderShannon {
 private:
     
-    bool is_num(char elem); // Check is number or no
+    bool is_num(const std::string elem); // Check is number or no
     
     std::string unescape(const std::string& str); // Check special symbol (\n, \t ...)
     
