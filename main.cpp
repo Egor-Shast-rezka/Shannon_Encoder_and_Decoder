@@ -32,6 +32,7 @@ int main(int argc, char* argv[]) {
             std::cerr << "\nError: " << e.what() << "\n";
         } catch (...) {
             std::cerr << "\nUnknown error.\n";
+        }
     }
     
     return 0;
