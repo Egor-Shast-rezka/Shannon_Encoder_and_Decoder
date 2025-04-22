@@ -25,13 +25,13 @@
 class DecoderShannon : public CoderShannon {
 private:
     
-    bool is_num(const std::string elem); // Check is number or no
+    bool is_num(const std::string elem) const; // Check is number or no
     
-    std::string unescape(const std::string& str); // Check special symbol (\n, \t ...)
+    std::string unescape(const std::string& str) const; // Check special symbol (\n, \t ...)
     
-    std::string read_file(const std::string& filename) override; // Read file from txt file
+    void insertInDictionary(const std::vector<std::string>& input_correct, map<std::string, std::string>& dictionary); // Insert data in dectionary
     
-    std::string decoder(std::string input_file, map<std::string, std::string> dictionary); // Decode text from txt file
+    std::string decoder(const std::string input_file, map<std::string, std::string>& dictionary); // Decode text from txt file
     
 public:
     

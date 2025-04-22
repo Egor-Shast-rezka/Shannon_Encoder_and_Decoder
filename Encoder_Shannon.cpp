@@ -67,37 +67,6 @@ void CoderShannon::Split(const std::vector<std::pair<std::string, float>>& dict,
 }
 
 
-// ================== read_file ==================
-
-std::string CoderShannon::read_file(const std::string& filename) { // Read file from txt file
-
-    std::ifstream file(filename);
-    std::string exemple_file = "input_example.txt";
-    
-    if (!file.is_open()) {
-    
-        std::cerr << "Error: file " << filename << " unknown. Use '" << exemple_file << "'.\n";
-        file.open(exemple_file);
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-
-    return buffer.str();
-}
-
-
-// ================== write_file ==================
-
-void CoderShannon::write_file(const std::string& filename, const std::string& content) {
-
-    std::ofstream file(filename);
-    if (!file.is_open()) throw std::runtime_error("Couldn't open the file: " + filename);
-
-    file << content;
-}
-
-
 // ================== checkAnswerUser ==================
 
 std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::string> values) { // Check user answer
@@ -116,9 +85,9 @@ std::string CoderShannon::checkAnswerUser(std::string call, std::vector<std::str
         std::getline(std::cin, AnswerUser);
     }
     
-    if (AnswerUser.size() < 4 || AnswerUser.substr(AnswerUser.size() - 4) != ".txt") {
+    if (AnswerUser.size() < 4 || AnswerUser.substr(AnswerUser.size() - 4) != values[0]) {
     
-        AnswerUser += ".txt";
+        AnswerUser += values[0];
     }
     
     return AnswerUser;
@@ -169,17 +138,38 @@ std::vector<std::string> CoderShannon::utf8_split(const std::string& str) {
 
 void CoderShannon::start_encoder() { // Start encoder shannon
     
-    // Name for output file
-    std::string output_file_name = "output.txt";
-    std::string dictionary_output_file_name = "dictionary.txt";
-    
+    // Name file and data for all code
+    // -------------------------
+    const std::string output_file_name = "output.bin";
+    const std::string file_name_dictionary = "dictionary.txt";
+    const std::string exemple_file = "input_example.txt";
+    const size_t block_size = 4096;
+    // -------------------------
+
     // Get user file
     std::string file_name = checkAnswerUser("Write name input file (in format txt): ", {".txt"});
-    std::string input = read_file("data/" + file_name);
-    auto symbols = utf8_split(input);
+
+    std::ifstream file("data/" + file_name, std::ios::binary);
     
+    if (!file.is_open()) {
+    
+        std::cerr << "Error: file " << file_name << " unknown. Use '" << exemple_file << "'.\n";
+        file.open(exemple_file, std::ios::binary);
+        
+        if (!file.is_open()) throw std::runtime_error("Example file has been lost.");
+        
+    }
+
+    // Count frequense
     map<std::string, float> freq;
-    for (const std::string& ch : symbols) freq[ch] += 1;
+    char buffer[block_size];
+
+    while (file.read(buffer, block_size) || file.gcount()) {
+    
+        auto symbols = utf8_split(std::string(buffer, file.gcount()));
+        
+        for (const std::string& ch : symbols) freq[ch] += 1;
+    }
     
     // Create sorted dictionary
     auto begin = freq.begin();
@@ -191,11 +181,11 @@ void CoderShannon::start_encoder() { // Start encoder shannon
         [](const std::pair<std::string, float>& a, const std::pair<std::string, float>& b) {
             return a.second > b.second;
         });
-    
+
     // Add chanse for all symbol in dictionary
     for (auto& pair : sorted_dict) pair.second /= freq.size();
     
-    // Make shannon code 
+    // Create array for shannon code
     std::vector<std::pair<std::string, std::string>> shannon_code;
     for (const auto& pair : sorted_dict) shannon_code.push_back({pair.first, ""});
 
@@ -204,28 +194,45 @@ void CoderShannon::start_encoder() { // Start encoder shannon
     map<std::string, std::string> shannon_code_dict;
     for (auto& pair : shannon_code) shannon_code_dict.insert(pair.first, pair.second);
     
-    // Create output file
-    std::string output_data;
-    std::string dictionary_output_data;
+    // Read main file, create output file
+    file.clear();
+    file.seekg(0);
     
-    for (auto& ch : symbols) output_data += shannon_code_dict[ch];
-    for (auto& pair : shannon_code) {
-        dictionary_output_data += escape_char(pair.first) + ": " + pair.second + "\n";
-    }
+    // Write output data
+    std::ofstream output_data("data/" + output_file_name, std::ios::binary);
     
-    // Writing in output file
-    try {
+    std::string output;
+    while (file.read(buffer, block_size) || file.gcount()) {
     
-        write_file("data/" + output_file_name, output_data);
-        std::cout << "The output file was recorded successfully!\n";
+        auto symbols = utf8_split(std::string(buffer, file.gcount()));
         
-        write_file("data/" + dictionary_output_file_name, dictionary_output_data);
-        std::cout << "The dictionary file was recorded successfully!\n";
+        for (const auto& ch : symbols) output += shannon_code_dict[ch];
         
+        while (output.size() >= 8) {
+        
+            std::bitset<8> byte(output.substr(0, 8));
+            output_data.put(static_cast<char>(byte.to_ulong()));
+            output = output.substr(8);
+        }
     }
-    catch (const std::exception& e) {
-    
-        std::cerr << "Error: " << e.what() << "\n";
+    if (!output.empty()) {
+        output.append(8 - output.size(), '0');
+        std::bitset<8> byte(output);
+        output_data.put(static_cast<char>(byte.to_ulong()));
     }
     
+    output_data.close();
+    file.close();
+
+    // Write output dictionary data
+    std::ofstream dictionary_output_data("data/" + file_name_dictionary);
+    for (const auto& pair : shannon_code) {
+    
+        dictionary_output_data << escape_char(pair.first) << ":" << pair.second << "\n";
+    }
+    dictionary_output_data.close();
+    
+    // Output in console
+    std::cout << "The output file was recorded successfully!\n";
+    std::cout << "The dictionary file was recorded successfully!\n";
 }

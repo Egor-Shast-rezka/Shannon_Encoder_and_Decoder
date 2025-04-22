@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <bitset>
 
 
 #ifndef ENCODER_SHANNON_H
@@ -27,10 +28,6 @@ protected:
     void Split(const std::vector<std::pair<std::string, float>>& dict,
         std::vector<std::pair<std::string, std::string>>& code_result,
         int start_i = 0); // Get each symbol unique num
-    
-    virtual std::string read_file(const std::string& filename); // Read file from txt file
-    
-    void write_file(const std::string& filename, const std::string& content); // Write file in txt file
     
     std::string checkAnswerUser(std::string call, std::vector<std::string> values); // Check user answer
     
