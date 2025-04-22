@@ -28,12 +28,11 @@ int main(int argc, char* argv[]) {
                 DecoderShannon coder;
                 coder.start_decoder();
             }
-        } 
-        catch (...) {
+        } catch (const std::runtime_error& e) {
+            std::cerr << "\nError: " << e.what() << "\n";
+        } catch (...) {
             std::cerr << "\nUnknown error.\n";
-        }
     }
     
     return 0;
 }
-
