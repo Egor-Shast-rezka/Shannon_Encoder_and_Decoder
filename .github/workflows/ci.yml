@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get install g++ cmake libgtest-dev
+        run: sudo apt-get install g++ cmake libgtest-dev libasound2-dev
 
       - name: Build and run tests
         run: |
@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get install g++ cmake libgtest-dev
+        run: sudo apt-get install g++ cmake libgtest-dev libasound2-dev
 
       - name: Build project
         run: |
