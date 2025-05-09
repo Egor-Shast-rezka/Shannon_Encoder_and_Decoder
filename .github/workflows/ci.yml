@@ -14,8 +14,8 @@ on:
 
 
 jobs:
-  build:
-    name: build all project
+  test:
+    name: Run C++ tests
     runs-on: ubuntu-latest
 
     steps:
@@ -25,5 +25,25 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install g++ cmake libgtest-dev
 
+      - name: Build and run tests
+        run: |
+          make test
+          make clean
+          
+  build:
+    name: build all project
+    runs-on: ubuntu-latest
+    
+    needs: test
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install g++ cmake libgtest-dev
+
       - name: Build project
-        run: make
+        run: |
+          make
+          make clean

@@ -8,7 +8,7 @@ DATADIR = data
 TARGET = $(BINDIR)/Start
 
 SRCS_MAIN = Encoder_Shannon.cpp Decoder_Shannon.cpp main.cpp
-SRCS_TEST = test.cpp
+SRCS_TEST = Encoder_Shannon.cpp Decoder_Shannon.cpp test.cpp
 
 OBJS_MAIN = $(patsubst %.cpp, $(BUILDDIR)/%.o, $(SRCS_MAIN))
 OBJS_TEST = $(patsubst %.cpp, $(BUILDDIR)/%.o, $(SRCS_TEST))
@@ -35,6 +35,7 @@ $(BUILDDIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 test: $(BUILDDIR)/test.o $(OBJS_TEST) | $(BUILDDIR) $(BINDIR)
+	@mkdir -p $(DATADIR)
 	$(CXX) $(CXXFLAGS) -o $(BINDIR)/test $^ $(GTEST_LIBS)
 	$(BINDIR)/test
 
