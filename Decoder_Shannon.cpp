@@ -119,7 +119,7 @@ void DecoderShannon::start_decoder() { // Start decoder shannon
         }
     }
     file_input_dictionary.close();
-    dictionary.print();
+    //dictionary.print();
     
     // Get data from main input file
     std::ifstream file_input("data/" + file_name, std::ios::binary);
